@@ -6,18 +6,7 @@ Nexus Shell — PyInstaller spec (one-dir 모드)
 결과:  dist/NexusShell/ 폴더
 """
 
-import os
-import site
-
 block_cipher = None
-
-# ctranslate2 네이티브 DLL 경로 탐색
-ct2_datas = []
-for sp in site.getsitepackages():
-    ct2_dir = os.path.join(sp, "ctranslate2")
-    if os.path.isdir(ct2_dir):
-        ct2_datas.append((ct2_dir, "ctranslate2"))
-        break
 
 a = Analysis(
     ["main.py"],
@@ -25,15 +14,12 @@ a = Analysis(
     binaries=[],
     datas=[
         ("assets/icon.png", "assets"),       # 트레이 아이콘
-    ] + ct2_datas,
+    ],
     hiddenimports=[
         # PySide6
         "PySide6.QtWidgets",
         "PySide6.QtCore",
         "PySide6.QtGui",
-        # faster-whisper / ctranslate2
-        "faster_whisper",
-        "ctranslate2",
         # 표준 라이브러리 중 동적 임포트
         "urllib.request",
         "urllib.parse",
@@ -49,7 +35,6 @@ a = Analysis(
         "core.executor",
         "core.functions",
         "core.shortcuts",
-        "core.stt",
         "utils.app_scanner",
         "utils.favorites",
         "utils.clipboard_history",
@@ -63,7 +48,6 @@ a = Analysis(
         "ui.tray",
         "ui.worker",
         "ui.shortcut_worker",
-        "ui.voice_worker",
         "ui.update_dialog",
     ],
     hookspath=[],
@@ -72,6 +56,9 @@ a = Analysis(
     excludes=[
         "tkinter", "matplotlib", "scipy", "pandas", "numpy.testing",
         "pytest", "unittest", "pip", "setuptools",
+        "faster_whisper", "ctranslate2", "sounddevice",
+        "PIL", "Pillow", "numpy",
+        "PySide6.QtQuick", "PySide6.QtQml", "PySide6.QtPdf",
     ],
     noarchive=False,
     optimize=0,

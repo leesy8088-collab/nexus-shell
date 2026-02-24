@@ -19,12 +19,10 @@ from utils.history import HistoryManager
 from core.brain_router import BrainRouter
 from core.executor import Executor
 from core.shortcuts import ShortcutManager
-from core.stt import STTEngine
 from ui.tray import TrayManager
 from ui.spotlight import SpotlightWindow
 from ui.worker import BrainWorker
 from ui.shortcut_worker import ShortcutWorker
-from ui.voice_worker import VoiceWorker
 from ui.settings_window import SettingsWindow
 from ui.hotkey import HotkeyListener
 
@@ -39,9 +37,7 @@ class NexusApp:
         self._brain = BrainRouter()
         self._executor = Executor()
         self._shortcut_manager = ShortcutManager()
-        self._stt_engine = STTEngine()
-        self._update_stt_hints()
-        self._stt_engine.preload()
+        self._stt_engine = None
         self._worker = None
 
         # 명령 히스토리
@@ -74,7 +70,6 @@ class NexusApp:
         # user_apps.json → APP_ALIASES 로드 (캐시 읽기만, 즉시 완료)
         load_user_apps()
         self._favorites.load_urls_into_aliases()
-        self._update_stt_hints()
 
     def _connect_signals(self):
         # 핫키 → Spotlight 토글 (즐겨찾기 전달)
@@ -260,11 +255,24 @@ class NexusApp:
         if icon_path:
             self._spotlight.set_favorites(self._favorites.get_all())
 
+    def _get_stt_engine(self):
+        """STT 엔진 lazy 초기화 (음성 기능 첫 사용 시)."""
+        if self._stt_engine is None:
+            try:
+                from core.stt import STTEngine
+                self._stt_engine = STTEngine()
+                self._update_stt_hints()
+                self._stt_engine.preload()
+            except ImportError:
+                print("[STT] faster-whisper 미설치 — 음성 기능 비활성화")
+        return self._stt_engine
+
     def _update_stt_hints(self):
         """앱/사이트 별칭만 STT 힌트로 설정 (단축어 제외 — 환각 방지)"""
+        if self._stt_engine is None:
+            return
         keywords = list(APP_ALIASES.keys())
         keywords += list(SITE_ALIASES.keys())
-        # 중복 제거
         self._stt_engine.set_hints(list(dict.fromkeys(keywords)))
 
     def _on_input_submitted(self, text):
@@ -411,11 +419,16 @@ class NexusApp:
 
     def _start_voice_recording(self):
         """VoiceWorker 생성 및 녹음 시작"""
+        engine = self._get_stt_engine()
+        if engine is None:
+            self._spotlight.show_error("음성 기능 사용 불가 (faster-whisper 미설치)")
+            return
         self._beep(800)  # 높은 톤 — 녹음 시작
         self._is_voice_recording = True
         self._spotlight.show_recording()
 
-        self._voice_worker = VoiceWorker(self._stt_engine)
+        from ui.voice_worker import VoiceWorker
+        self._voice_worker = VoiceWorker(engine)
         self._voice_worker.level_updated.connect(self._spotlight.update_level)
         self._voice_worker.recording_stopped.connect(self._on_recording_auto_stopped)
         self._voice_worker.transcription_ready.connect(self._on_transcription)

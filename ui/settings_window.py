@@ -857,7 +857,12 @@ class SettingsWindow(QDialog):
         """일반 설정 전체 페이지 (우측 패널)."""
         canvas = QFrame()
         canvas.setObjectName("EditorCanvas")
-        lo = QVBoxLayout(canvas)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        inner = QWidget()
+        lo = QVBoxLayout(inner)
         lo.setContentsMargins(28, 28, 28, 28)
         lo.setSpacing(20)
 
@@ -1032,6 +1037,10 @@ class SettingsWindow(QDialog):
         # 현재 값 로드
         self._load_prefs_to_ui()
 
+        scroll.setWidget(inner)
+        outer_lo = QVBoxLayout(canvas)
+        outer_lo.setContentsMargins(0, 0, 0, 0)
+        outer_lo.addWidget(scroll)
         return canvas
 
     def _build_editor_page(self) -> QFrame:
