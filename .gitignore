@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+
+# Environment
+.env
+.venv/
+venv/
+env/
+
+# PyInstaller build
+build/
+dist/
+dist_nuitka/
+*.spec.bak
+
+# User data (not committed)
+clipboard_data/
+clipboard_history.json
+history.json
+favorites.json
+preferences.json
+user_apps.json
+discovered_apps.json
+settings.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Misc
+.claude/
+debug.log
+plan.txt
+*.png
+!assets/**/*.png
